@@ -1,137 +1,73 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Photo Route Lab</title>
-  <script src="https://cdn.jsdelivr.net/npm/exifreader@4.44.1/dist/exif-reader.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <style>
-    :root{--bg:#f6f7f9;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#111827;--ok:#137333;--bad:#b3261e}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif}
-    .wrap{max-width:980px;margin:0 auto;padding:28px 18px 60px}
-    h1{font-size:28px;margin:0 0 8px}.lead{margin:0 0 24px;color:var(--muted);line-height:1.6}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
-    .drop{border:1.5px dashed #cbd5e1;border-radius:16px;padding:32px 18px;text-align:center;cursor:pointer;background:#fafafa;transition:.15s}
-    .drop.drag{background:#f1f5f9;border-color:#64748b}.drop strong{display:block;font-size:17px;margin-bottom:6px}.drop span{color:var(--muted);font-size:14px}
-    input[type=file]{display:none}.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
-    button{border:0;border-radius:10px;padding:11px 14px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
-    button.secondary{background:#eef2f7;color:#111827}.remove-btn{background:#fff;color:#b3261e;border:1px solid #fecaca;padding:8px 10px;font-size:12px}
-    .summary{margin:18px 0 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .stat{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}.stat b{display:block;font-size:22px}.stat span{font-size:13px;color:var(--muted)}
-    .note{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.55}.debug{font-size:12px;color:var(--muted);margin-top:8px;white-space:pre-wrap}
-    .map-card{margin-top:18px;display:none}.map-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.map-title{font-size:18px;font-weight:800;margin:0 0 4px}.map-desc{font-size:13px;color:var(--muted);line-height:1.5;margin:0}
-    #map{width:100%;height:480px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#eef2f7}
-    .route-index{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#111827;color:#fff;border:3px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.25);font-size:13px;font-weight:800}
-    .popup{width:160px}.popup img{width:160px;height:110px;object-fit:cover;border-radius:10px;display:block;margin-bottom:8px}.popup b{display:block;font-size:13px;margin-bottom:3px}.popup span{font-size:12px;color:#6b7280}
-    .route-list{display:flex;gap:8px;overflow:auto;padding:10px 2px 2px;margin-top:10px}.route-chip{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;color:#374151;cursor:pointer}.route-chip b{color:#111827;margin-right:5px}
-    table{width:100%;border-collapse:collapse;margin-top:18px;background:#fff;border-radius:14px;overflow:hidden}
-    th,td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left;font-size:14px;vertical-align:top}th{font-size:12px;color:var(--muted);background:#fafafa}
-    .thumb{width:54px;height:54px;object-fit:cover;border-radius:9px;border:1px solid var(--line)}.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}.empty{padding:30px;text-align:center;color:var(--muted)}
-    @media(max-width:700px){.summary{grid-template-columns:1fr}.table-wrap{overflow:auto}table{min-width:840px}#map{height:410px}.map-head{display:block}}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>PhotoLog</title>
+<script src="https://cdn.jsdelivr.net/npm/exifreader@4.44.1/dist/exif-reader.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<style>
+:root{--ink:#0f172a;--sub:#64748b;--line:#e2e8f0;--bg:#f4f7fb;--blue:#1769ff;--soft:#eef5ff;--card:#fff;--danger:#dc2626;--shadow:0 12px 32px rgba(15,23,42,.08)}*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#eaf4ff 0,#f6f8fb 45%,#eef3f8 100%);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;color:var(--ink)}button,input{font:inherit}.app{max-width:460px;min-height:100vh;margin:0 auto;background:#fff;box-shadow:0 0 40px rgba(15,23,42,.08);position:relative;overflow:hidden}.screen{display:none;min-height:100vh;padding:20px 18px 94px;background:linear-gradient(180deg,#fff 0,#f8fafc 100%)}.screen.active{display:block}.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.brand{font-weight:900;font-size:28px;letter-spacing:-.8px}.brand small{display:block;font-size:13px;color:var(--sub);font-weight:600;margin-top:4px}.icon-btn{border:0;background:#f1f5f9;width:38px;height:38px;border-radius:12px;cursor:pointer}.hero{border-radius:28px;min-height:500px;padding:26px 22px;position:relative;overflow:hidden;background:linear-gradient(180deg,#cce8ff 0,#eaf7ff 50%,#fefefe 100%)}.hero:after{content:"";position:absolute;left:-40px;right:-40px;bottom:-70px;height:260px;background:linear-gradient(180deg,rgba(255,255,255,.15),#fff);border-radius:50% 50% 0 0}.hero h1{font-size:30px;line-height:1.15;margin:10px 0 10px;letter-spacing:-1.2px;position:relative;z-index:2}.hero p{color:#475569;line-height:1.65;margin:0;position:relative;z-index:2}.hero-art{height:265px;margin-top:25px;position:relative;z-index:2}.sun{width:92px;height:92px;border-radius:50%;background:#ffd76a;position:absolute;right:12px;top:8px;box-shadow:0 0 0 16px rgba(255,215,106,.18)}.mount{position:absolute;bottom:20px;border-left:88px solid transparent;border-right:88px solid transparent;border-bottom:150px solid #94b8c8}.mount.a{left:-20px}.mount.b{left:105px;border-bottom-color:#6f9dae;transform:scale(.8)}.lake{position:absolute;left:-20px;right:-20px;bottom:0;height:70px;background:linear-gradient(180deg,#8ed5ff,#6cb9ee);border-radius:50% 50% 0 0}.plane{position:absolute;right:92px;top:92px;font-size:42px;transform:rotate(-14deg)}.primary{width:100%;border:0;border-radius:18px;padding:17px 18px;background:#0f172a;color:#fff;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 10px 22px rgba(15,23,42,.18)}.hero .primary{position:absolute;left:22px;right:22px;bottom:22px;width:calc(100% - 44px);z-index:3}.section-title{font-size:24px;font-weight:900;letter-spacing:-.7px;margin:0}.section-sub{font-size:14px;color:var(--sub);margin:6px 0 0}.seg{display:flex;gap:8px;margin:16px 0}.seg button{flex:1;border:0;border-radius:999px;padding:10px 8px;background:#eef2f6;color:#475569;font-weight:700}.seg button.active{background:#0f172a;color:#fff}.picker-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.tile{aspect-ratio:1;border-radius:14px;background:#e2e8f0;overflow:hidden;position:relative}.tile img{width:100%;height:100%;object-fit:cover}.check{position:absolute;right:6px;top:6px;width:25px;height:25px;border-radius:50%;background:#fff;color:#0f172a;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.16)}.picker-footer{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(460px,100%);background:rgba(255,255,255,.96);backdrop-filter:blur(14px);padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;z-index:10}.picker-footer .count{flex:1;font-size:13px;color:var(--sub)}.picker-footer .count b{display:block;color:var(--ink);font-size:16px}.picker-footer .primary{width:132px}.hidden{display:none!important}#fileInput{display:none}.analysis-wrap{text-align:center;padding-top:72px}.analysis-art{width:210px;height:180px;margin:20px auto;position:relative}.globe{width:150px;height:105px;border-radius:55% 45% 50% 45%;background:#dff2ff;position:absolute;left:25px;top:45px;transform:rotate(-8deg)}.photo-card{width:72px;height:88px;background:#fff;border-radius:12px;box-shadow:var(--shadow);position:absolute;overflow:hidden;border:4px solid #fff}.photo-card img{width:100%;height:100%;object-fit:cover}.photo-card.a{left:20px;top:20px;transform:rotate(-9deg)}.photo-card.b{right:14px;top:8px;transform:rotate(9deg)}.pin{position:absolute;font-size:34px;right:48px;bottom:8px}.progress{height:10px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin:26px 0 16px}.progress>div{height:100%;width:0;background:linear-gradient(90deg,#75b8ff,#2f7df7);transition:width .4s}.steps{text-align:left;display:grid;gap:13px;margin-top:26px}.step{display:flex;gap:10px;align-items:center;color:#475569}.dot{width:22px;height:22px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:12px}.step.done .dot{background:#dbeafe;color:#1769ff}.step.done{color:#0f172a}.summary-card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}.stat{text-align:center;background:#f8fafc;border-radius:16px;padding:12px 6px}.stat b{display:block;font-size:18px}.stat span{font-size:11px;color:var(--sub)}.map-shell{margin-top:14px;border-radius:22px;overflow:hidden;border:1px solid var(--line);height:330px}.map{width:100%;height:100%}.cta-row{display:flex;gap:9px;margin-top:14px}.cta-row button{flex:1}.secondary{border:0;border-radius:16px;padding:14px;background:#eef2f7;color:#0f172a;font-weight:800}.tabs{display:flex;gap:8px;overflow:auto;margin:18px -2px 12px;padding:2px}.tabs button{white-space:nowrap;border:0;border-radius:999px;padding:9px 14px;background:#eef2f7;color:#475569;font-weight:800}.tabs button.active{background:#0f172a;color:#fff}.day-list{display:grid;gap:14px}.day{background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px}.day-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.day-head b{font-size:17px}.day-head span{font-size:12px;color:var(--sub)}.thumb-row{display:flex;gap:6px;overflow:auto}.thumb-row img{width:64px;height:64px;object-fit:cover;border-radius:12px}.best-main{border-radius:24px;overflow:hidden;position:relative;height:330px;background:#e2e8f0}.best-main img{width:100%;height:100%;object-fit:cover}.best-badge{position:absolute;left:14px;top:14px;background:#ffd75f;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:900}.best-caption{position:absolute;left:16px;right:16px;bottom:14px;color:white;text-shadow:0 2px 10px rgba(0,0,0,.45)}.content-list{display:grid;gap:10px}.content-item{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;align-items:center;gap:12px}.content-icon{width:52px;height:52px;border-radius:14px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:25px}.content-item b{display:block;margin-bottom:4px}.content-item span{font-size:12px;color:var(--sub)}.content-item .arrow{margin-left:auto;font-size:24px;color:#94a3b8}.bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(460px,100%);display:flex;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:9px 8px calc(9px + env(safe-area-inset-bottom));z-index:20}.bottom-nav button{flex:1;border:0;background:transparent;color:#94a3b8;font-size:11px;font-weight:700;padding:6px}.bottom-nav button.active{color:#0f172a}.bottom-nav i{display:block;font-style:normal;font-size:20px;margin-bottom:2px}@media(min-width:700px){body{padding:24px 0}.app{min-height:calc(100vh - 48px);border-radius:30px}.screen{min-height:calc(100vh - 48px)}}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Photo Route Lab</h1>
-    <p class="lead">사진을 선택하면 촬영시간과 GPS를 읽고, 시간순으로 여행 경로를 지도에 표시합니다. 사진은 서버로 업로드하지 않습니다.</p>
-
-    <div class="card">
-      <label class="drop" id="drop" for="files"><strong>사진을 선택하거나 여기에 끌어놓으세요</strong><span>JPG / JPEG / HEIC / HEIF · 여러 장 선택 가능</span></label>
-      <input id="files" type="file" multiple />
-      <div class="toolbar"><button id="pickBtn">사진 선택</button><button id="clearBtn" class="secondary">전체 초기화</button><button id="csvBtn" class="secondary">CSV 저장</button></div>
-      <div class="summary"><div class="stat"><b id="total">0</b><span>선택한 사진</span></div><div class="stat"><b id="withTime">0</b><span>촬영시간 있음</span></div><div class="stat"><b id="withGps">0</b><span>GPS 있음</span></div></div>
-      <p class="note">※ 목록에서 필요 없는 사진을 삭제하면 지도와 이동 경로가 바로 다시 계산됩니다. 국가가 다른 사진이 섞인 경우 불필요한 사진을 빼고 확인해 보세요.</p>
-      <div id="debug" class="debug"></div>
-    </div>
-
-    <div class="card map-card" id="mapCard">
-      <div class="map-head">
-        <div><p class="map-title">여행 경로</p><p class="map-desc" id="mapDesc">GPS가 있는 사진을 촬영시간 순으로 연결합니다.</p></div>
-        <button class="secondary" id="fitBtn">전체 경로 보기</button>
-      </div>
-      <div id="map"></div>
-      <div class="route-list" id="routeList"></div>
-    </div>
-
-    <div class="table-wrap"><table><thead><tr><th>미리보기</th><th>파일명</th><th>촬영시간</th><th>위도</th><th>경도</th><th>상태</th><th>관리</th></tr></thead><tbody id="tbody"><tr><td colspan="7" class="empty">아직 선택한 사진이 없습니다.</td></tr></tbody></table></div>
+<div class="app">
+<section id="home" class="screen active">
+  <div class="topbar"><div class="brand">▲ PhotoLog<small>사진이 여행이 되는 순간</small></div><button class="icon-btn">⚙</button></div>
+  <div class="hero">
+    <h1>흩어진 여행 사진을<br>하나의 기록으로</h1>
+    <p>사진과 영상을 고르면 시간과 위치를 읽고<br>여행 기록과 결과물을 자동으로 정리합니다.</p>
+    <div class="hero-art"><div class="sun"></div><div class="mount a"></div><div class="mount b"></div><div class="lake"></div><div class="plane">✈️</div></div>
+    <button class="primary" id="startBtn">새 여행 만들기 →</button>
   </div>
+</section>
+
+<section id="picker" class="screen">
+  <div class="topbar"><button class="icon-btn back" data-go="home">←</button><div><h2 class="section-title">사진/영상 선택</h2><p class="section-sub">여행의 모든 순간을 선택해 주세요.</p></div><span style="width:38px"></span></div>
+  <div class="seg"><button class="active">사진과 동영상</button><button>사진만</button><button>동영상만</button></div>
+  <label for="fileInput" class="primary" style="display:block;text-align:center;margin-bottom:14px">사진 선택하기</label>
+  <input id="fileInput" type="file" multiple accept="image/*,video/*">
+  <div id="grid" class="picker-grid"></div>
+  <div id="emptyPick" style="text-align:center;color:var(--sub);padding:72px 20px">아직 선택한 사진이 없습니다.<br>사진 선택하기를 눌러 여행 사진을 불러오세요.</div>
+  <div class="picker-footer"><div class="count"><b id="selectedCount">0개 선택됨</b><span id="selectedDetail">사진 0장</span></div><button class="primary" id="nextBtn">다음 →</button></div>
+</section>
+
+<section id="analysis" class="screen">
+  <div class="analysis-wrap"><h2 class="section-title">자동 분석 중...</h2><p class="section-sub">사진을 분석해 여행을 정리하고 있어요.</p>
+    <div class="analysis-art"><div class="globe"></div><div class="photo-card a"><img id="anaImg1"></div><div class="photo-card b"><img id="anaImg2"></div><div class="pin">📍</div></div>
+    <div class="progress"><div id="progressBar"></div></div><b id="progressText">0%</b>
+    <div class="steps"><div class="step" id="s1"><span class="dot">✓</span>촬영 시간 읽기</div><div class="step" id="s2"><span class="dot">✓</span>위치 정보 확인하기</div><div class="step" id="s3"><span class="dot">✓</span>날짜별로 묶기</div><div class="step" id="s4"><span class="dot">✓</span>여행 기록 생성하기</div></div>
+  </div>
+</section>
+
+<section id="result" class="screen">
+  <div class="topbar"><button class="icon-btn back" data-go="home">←</button><div><h2 class="section-title" id="tripTitle">여행을 찾았어요!</h2><p class="section-sub" id="tripPeriod">사진을 분석했습니다.</p></div><span style="width:38px"></span></div>
+  <div class="summary-card"><div class="stats"><div class="stat"><b id="stTotal">0</b><span>전체 파일</span></div><div class="stat"><b id="stDays">0</b><span>여행일</span></div><div class="stat"><b id="stGps">0</b><span>GPS 사진</span></div><div class="stat"><b id="stPhotos">0</b><span>사진</span></div></div></div>
+  <div class="map-shell"><div id="resultMap" class="map"></div></div>
+  <div class="cta-row"><button class="primary" data-tab="record">여행 기록 보기</button><button class="secondary" data-tab="content">결과물 만들기</button></div>
+  <div class="tabs"><button class="active" data-view="record">여행 기록</button><button data-view="mapview">여행 지도</button><button data-view="best">베스트컷</button><button data-view="content">만들기</button></div>
+  <div id="recordView" class="view"></div>
+  <div id="mapviewView" class="view hidden"><div class="summary-card"><h3 style="margin-top:0">여행 지도</h3><p class="section-sub">사진의 GPS 위치를 촬영 순서대로 연결했습니다.</p><div class="map-shell" style="margin-top:12px"><div id="detailMap" class="map"></div></div></div></div>
+  <div id="bestView" class="view hidden"></div>
+  <div id="contentView" class="view hidden"><div class="content-list"><div class="content-item"><div class="content-icon">🗺️</div><div><b>여행 루트 카드</b><span>여행 경로를 한 장의 이미지로 만들기</span></div><div class="arrow">›</div></div><div class="content-item"><div class="content-icon">📖</div><div><b>포토 다이어리</b><span>날짜별 사진과 기록으로 앨범 만들기</span></div><div class="arrow">›</div></div><div class="content-item"><div class="content-icon">🎬</div><div><b>여행 하이라이트 영상</b><span>사진과 영상으로 짧은 여행 영상 만들기</span></div><div class="arrow">›</div></div><div class="content-item"><div class="content-icon">🖼️</div><div><b>인스타그램 캐러셀</b><span>SNS에 바로 올릴 수 있는 카드 만들기</span></div><div class="arrow">›</div></div></div></div>
+</section>
+
+<nav class="bottom-nav"><button class="active" data-go="home"><i>⌂</i>홈</button><button><i>▣</i>여행들</button><button><i>▤</i>만든 콘텐츠</button><button><i>⚙</i>설정</button></nav>
+</div>
 <script>
-const filesInput=document.getElementById('files');
-const tbody=document.getElementById('tbody');
-const drop=document.getElementById('drop');
-const debug=document.getElementById('debug');
-const mapCard=document.getElementById('mapCard');
-const routeList=document.getElementById('routeList');
-const mapDesc=document.getElementById('mapDesc');
-let rows=[];let map=null;let routeLayer=null;let markerLayer=null;let routeBounds=null;let routeMarkers=[];
-
-document.getElementById('pickBtn').onclick=()=>filesInput.click();
-document.getElementById('fitBtn').onclick=()=>{if(map&&routeBounds)map.fitBounds(routeBounds,{padding:[28,28]})};
-document.getElementById('clearBtn').onclick=()=>{rows.forEach(r=>r.previewUrl&&URL.revokeObjectURL(r.previewUrl));rows=[];filesInput.value='';debug.textContent='';refreshAll()};
-document.getElementById('csvBtn').onclick=()=>{
-  if(!rows.length)return alert('먼저 사진을 선택해 주세요.');
-  const esc=v=>'"'+String(v??'').replaceAll('"','""')+'"';
-  const csv=['fileName,dateTimeOriginal,latitude,longitude,hasTime,hasGps',...rows.map(r=>[esc(r.fileName),esc(r.dateTimeOriginal),r.latitude??'',r.longitude??'',!!r.dateTimeOriginal,r.latitude!=null&&r.longitude!=null].join(','))].join('\n');
-  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='photo-metadata.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);
-};
-
-filesInput.addEventListener('change',e=>handleFiles([...e.target.files]));
-['dragenter','dragover'].forEach(evt=>drop.addEventListener(evt,e=>{e.preventDefault();drop.classList.add('drag')}));
-['dragleave','drop'].forEach(evt=>drop.addEventListener(evt,e=>{e.preventDefault();drop.classList.remove('drag')}));
-drop.addEventListener('drop',e=>handleFiles([...e.dataTransfer.files]));
-
-async function handleFiles(files){
-  if(!files.length)return;
-  rows.forEach(r=>r.previewUrl&&URL.revokeObjectURL(r.previewUrl));rows=[];debug.textContent='';clearMap();tbody.innerHTML='<tr><td colspan="7" class="empty">메타데이터를 읽는 중입니다...</td></tr>';
-  let failures=[];
-  for(const file of files){
-    let dt=null,lat=null,lon=null,error='';
-    try{
-      const tags=await ExifReader.load(file,{expanded:true,computed:true});dt=pickDate(tags);
-      if(tags.gps){if(Number.isFinite(tags.gps.Latitude))lat=tags.gps.Latitude;if(Number.isFinite(tags.gps.Longitude))lon=tags.gps.Longitude}
-      if(lat==null||lon==null){const flat=await ExifReader.load(file,{computed:true});const coords=parseGpsFallback(flat);if(lat==null)lat=coords.lat;if(lon==null)lon=coords.lon;if(!dt)dt=pickDate(flat)}
-    }catch(err){error=err?.message||String(err);failures.push(`${file.name}: ${error}`)}
-    rows.push({id:crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`,fileName:file.name,dateTimeOriginal:normalizeDate(dt),latitude:lat,longitude:lon,previewUrl:URL.createObjectURL(file),error});
-  }
-  rows.sort((a,b)=>dateKey(a.dateTimeOriginal)-dateKey(b.dateTimeOriginal));
-  if(failures.length)debug.textContent='읽기 실패\n'+failures.join('\n');
-  refreshAll();
-}
-
-function removePhoto(id){
-  const idx=rows.findIndex(r=>r.id===id);if(idx<0)return;
-  if(rows[idx].previewUrl)URL.revokeObjectURL(rows[idx].previewUrl);
-  rows.splice(idx,1);
-  refreshAll();
-}
-function refreshAll(){render();clearMap();renderMap()}
-function pickDate(tags){if(!tags)return null;const c=[tags.exif?.DateTimeOriginal,tags.exif?.CreateDate,tags.exif?.DateTimeDigitized,tags['DateTimeOriginal'],tags['CreateDate'],tags['DateTimeDigitized'],tags['DateTime']];for(const t of c){if(!t)continue;if(typeof t==='string')return t;if(t.description)return t.description;if(t.value)return Array.isArray(t.value)?t.value[0]:t.value;if(t.computed)return t.computed}return null}
-function parseGpsFallback(tags){const val=t=>t?.computed??t?.value??t?.description??null;return{lat:toDecimal(val(tags?.GPSLatitude),val(tags?.GPSLatitudeRef)),lon:toDecimal(val(tags?.GPSLongitude),val(tags?.GPSLongitudeRef))}}
-function toDecimal(v,ref){if(v==null)return null;if(typeof v==='number')return applyRef(v,ref);if(Array.isArray(v)){const nums=v.map(x=>typeof x==='number'?x:(x?.numerator!=null&&x?.denominator?x.numerator/x.denominator:Number(x))).filter(Number.isFinite);if(nums.length>=3)return applyRef(nums[0]+nums[1]/60+nums[2]/3600,ref);if(nums.length===1)return applyRef(nums[0],ref)}const nums=String(v).match(/-?\d+(?:\.\d+)?/g)?.map(Number)||[];if(nums.length>=3)return applyRef(nums[0]+nums[1]/60+nums[2]/3600,ref||String(v));if(nums.length===1)return applyRef(nums[0],ref||String(v));return null}
-function applyRef(n,ref){const s=Array.isArray(ref)?ref[0]:String(ref||'');return /S|W/i.test(s)?-Math.abs(n):n}
-function normalizeDate(v){if(!v)return null;if(v instanceof Date)return formatDate(v);const s=String(v).trim();const m=s.match(/(\d{4})[:\-](\d{2})[:\-](\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);if(m)return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}:${m[6]}`;const d=new Date(s);return Number.isNaN(d.getTime())?s:formatDate(d)}
-function formatDate(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`}
-function dateKey(s){if(!s)return Infinity;const m=s.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6]).getTime():Infinity}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function shortTime(s){if(!s)return '시간 없음';const m=s.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})/);return m?`${m[1]} ${m[2]}`:s}
-function initMap(){if(map)return;map=L.map('map',{zoomControl:true});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map)}
-function clearMap(){routeMarkers=[];routeBounds=null;routeList.innerHTML='';mapCard.style.display='none';if(map){if(routeLayer){map.removeLayer(routeLayer);routeLayer=null}if(markerLayer){map.removeLayer(markerLayer);markerLayer=null}}}
-function renderMap(){
-  const gpsRows=rows.filter(r=>Number.isFinite(r.latitude)&&Number.isFinite(r.longitude));if(!gpsRows.length){mapCard.style.display='none';return}
-  mapCard.style.display='block';initMap();setTimeout(()=>map.invalidateSize(),60);markerLayer=L.layerGroup().addTo(map);const points=gpsRows.map(r=>[r.latitude,r.longitude]);if(points.length>1)routeLayer=L.polyline(points,{weight:4,opacity:.78,lineJoin:'round'}).addTo(map);
-  gpsRows.forEach((r,i)=>{const icon=L.divIcon({className:'',html:`<div class="route-index">${i+1}</div>`,iconSize:[32,32],iconAnchor:[16,16],popupAnchor:[0,-18]});const popup=`<div class="popup"><img src="${r.previewUrl}" alt=""><b>${i+1}. ${escapeHtml(r.fileName)}</b><span>${escapeHtml(shortTime(r.dateTimeOriginal))}</span></div>`;const marker=L.marker([r.latitude,r.longitude],{icon}).bindPopup(popup,{maxWidth:190}).addTo(markerLayer);routeMarkers.push(marker)});
-  routeBounds=L.latLngBounds(points);if(points.length===1)map.setView(points[0],15);else map.fitBounds(routeBounds,{padding:[28,28]});mapDesc.textContent=`GPS 사진 ${gpsRows.length}장을 촬영시간 순으로 표시했습니다.`;
-  routeList.innerHTML=gpsRows.map((r,i)=>`<button class="route-chip" data-index="${i}"><b>${i+1}</b>${escapeHtml(shortTime(r.dateTimeOriginal))}</button>`).join('');routeList.querySelectorAll('.route-chip').forEach(btn=>btn.addEventListener('click',()=>{const i=Number(btn.dataset.index),r=gpsRows[i];if(!r)return;map.setView([r.latitude,r.longitude],Math.max(map.getZoom(),15));routeMarkers[i]?.openPopup()}));
-}
-function render(){
-  document.getElementById('total').textContent=rows.length;document.getElementById('withTime').textContent=rows.filter(r=>r.dateTimeOriginal).length;document.getElementById('withGps').textContent=rows.filter(r=>r.latitude!=null&&r.longitude!=null).length;
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="7" class="empty">아직 선택한 사진이 없습니다.</td></tr>';return}
-  tbody.innerHTML=rows.map(r=>{const g=r.latitude!=null&&r.longitude!=null,t=!!r.dateTimeOriginal;const state=g&&t?'<span class="ok">경로 사용 가능</span>':t?'<span class="bad">GPS 없음</span>':g?'<span class="bad">시간 없음</span>':'<span class="bad">EXIF 없음</span>';return `<tr><td><img class="thumb" src="${r.previewUrl}" alt=""></td><td>${escapeHtml(r.fileName)}</td><td>${escapeHtml(r.dateTimeOriginal||'-')}</td><td>${g?r.latitude.toFixed(6):'-'}</td><td>${g?r.longitude.toFixed(6):'-'}</td><td>${state}</td><td><button class="remove-btn" data-id="${r.id}">삭제</button></td></tr>`}).join('');
-  tbody.querySelectorAll('.remove-btn').forEach(btn=>btn.addEventListener('click',()=>removePhoto(btn.dataset.id)));
-}
+const screens=[...document.querySelectorAll('.screen')];const fileInput=document.getElementById('fileInput');const grid=document.getElementById('grid');const emptyPick=document.getElementById('emptyPick');let rows=[];let resultMap=null,detailMap=null,resultLayers=[],detailLayers=[];
+function show(id){screens.forEach(s=>s.classList.toggle('active',s.id===id));window.scrollTo(0,0);document.querySelector('.bottom-nav').style.display=(id==='analysis'||id==='picker')?'none':'flex'}
+document.getElementById('startBtn').onclick=()=>show('picker');document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
+fileInput.addEventListener('change',e=>loadFiles([...e.target.files]));
+async function loadFiles(files){rows.forEach(r=>r.url&&URL.revokeObjectURL(r.url));rows=[];grid.innerHTML='';for(const file of files){const url=URL.createObjectURL(file);let dt=null,lat=null,lon=null;try{if(file.type.startsWith('image/')){const tags=await ExifReader.load(file,{expanded:true,computed:true});dt=pickDate(tags);if(tags.gps){lat=Number.isFinite(tags.gps.Latitude)?tags.gps.Latitude:null;lon=Number.isFinite(tags.gps.Longitude)?tags.gps.Longitude:null}if(lat==null||lon==null){const flat=await ExifReader.load(file,{computed:true});const c=parseGpsFallback(flat);lat=lat??c.lat;lon=lon??c.lon;if(!dt)dt=pickDate(flat)}}}catch(e){}rows.push({name:file.name,type:file.type,url,date:normalizeDate(dt),lat,lon})}rows.sort((a,b)=>dateKey(a.date)-dateKey(b.date));renderGrid()}
+function renderGrid(){emptyPick.classList.toggle('hidden',rows.length>0);grid.innerHTML=rows.map((r,i)=>`<div class="tile"><img src="${r.url}" alt=""><span class="check">✓</span></div>`).join('');document.getElementById('selectedCount').textContent=`${rows.length}개 선택됨`;document.getElementById('selectedDetail').textContent=`사진 ${rows.filter(r=>r.type.startsWith('image/')).length}장`;document.getElementById('anaImg1').src=rows[0]?.url||'';document.getElementById('anaImg2').src=rows[1]?.url||rows[0]?.url||''}
+document.getElementById('nextBtn').onclick=()=>{if(!rows.length)return alert('사진을 먼저 선택해 주세요.');show('analysis');runAnalysis()};
+function runAnalysis(){let p=0;const bar=document.getElementById('progressBar'),txt=document.getElementById('progressText');['s1','s2','s3','s4'].forEach(id=>document.getElementById(id).classList.remove('done'));const t=setInterval(()=>{p+=20;bar.style.width=p+'%';txt.textContent=p+'%';if(p>=20)document.getElementById('s1').classList.add('done');if(p>=40)document.getElementById('s2').classList.add('done');if(p>=60)document.getElementById('s3').classList.add('done');if(p>=80)document.getElementById('s4').classList.add('done');if(p>=100){clearInterval(t);setTimeout(()=>{buildResult();show('result');setTimeout(()=>{drawMap('resultMap');drawMap('detailMap')},120)},450)}},280)}
+function buildResult(){const dated=rows.filter(r=>r.date);const days=[...new Set(dated.map(r=>r.date.slice(0,10)))];const first=days[0],last=days.at(-1);document.getElementById('tripTitle').textContent=`${Math.max(days.length,1)}일간의 여행을 찾았어요!`;document.getElementById('tripPeriod').textContent=first?(first===last?first:`${first} ~ ${last}`):'촬영시간이 있는 사진을 기준으로 정리했습니다.';document.getElementById('stTotal').textContent=rows.length;document.getElementById('stDays').textContent=Math.max(days.length,1);document.getElementById('stGps').textContent=rows.filter(r=>Number.isFinite(r.lat)&&Number.isFinite(r.lon)).length;document.getElementById('stPhotos').textContent=rows.filter(r=>r.type.startsWith('image/')).length;const groups=days.length?days.map(d=>({d,items:rows.filter(r=>r.date?.startsWith(d))})):[{d:'여행 사진',items:rows}];document.getElementById('recordView').innerHTML=`<div class="day-list">${groups.map((g,i)=>`<div class="day"><div class="day-head"><b>${i+1}일차</b><span>${g.d} · ${g.items.length}장</span></div><div class="thumb-row">${g.items.slice(0,7).map(x=>`<img src="${x.url}">`).join('')}</div></div>`).join('')}</div>`;const best=rows.filter(r=>r.type.startsWith('image/')).slice(0,6);document.getElementById('bestView').innerHTML=best.length?`<div class="best-main"><img src="${best[0].url}"><span class="best-badge">TOP 1</span><div class="best-caption"><b>이번 여행의 베스트컷</b><br><small>${best[0].date||best[0].name}</small></div></div><div class="thumb-row" style="margin-top:10px">${best.slice(1).map(x=>`<img src="${x.url}">`).join('')}</div>`:'<div class="summary-card">베스트컷을 만들 사진이 없습니다.</div>'}
+function drawMap(id){const el=document.getElementById(id);if(!el)return;const gps=rows.filter(r=>Number.isFinite(r.lat)&&Number.isFinite(r.lon));let m=id==='resultMap'?resultMap:detailMap;if(!m){m=L.map(id,{zoomControl:id!=='resultMap'});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(m);if(id==='resultMap')resultMap=m;else detailMap=m}else{m.eachLayer(l=>{if(!(l instanceof L.TileLayer))m.removeLayer(l)})}setTimeout(()=>m.invalidateSize(),50);if(!gps.length){m.setView([37.5665,126.978],5);return}const pts=gps.map(r=>[r.lat,r.lon]);L.polyline(pts,{color:'#1769ff',weight:4,dashArray:'8 8',opacity:.9}).addTo(m);gps.forEach((r,i)=>L.circleMarker([r.lat,r.lon],{radius:9,color:'#fff',weight:3,fillColor:'#1769ff',fillOpacity:1}).bindTooltip(String(i+1),{permanent:true,direction:'center',className:'num-tip'}).addTo(m));m.fitBounds(L.latLngBounds(pts),{padding:[24,24],maxZoom:13})}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchView(b.dataset.tab));function switchView(v){document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));['record','mapview','best','content'].forEach(x=>document.getElementById(x+'View').classList.toggle('hidden',x!==v));if(v==='mapview')setTimeout(()=>drawMap('detailMap'),80)}
+function pickDate(tags){if(!tags)return null;for(const t of [tags.exif?.DateTimeOriginal,tags.exif?.CreateDate,tags.exif?.DateTimeDigitized,tags.DateTimeOriginal,tags.CreateDate,tags.DateTimeDigitized,tags.DateTime]){if(!t)continue;if(typeof t==='string')return t;if(t.description)return t.description;if(t.value)return Array.isArray(t.value)?t.value[0]:t.value;if(t.computed)return t.computed}return null}function parseGpsFallback(tags){const val=t=>t?.computed??t?.value??t?.description??null;return{lat:toDecimal(val(tags?.GPSLatitude),val(tags?.GPSLatitudeRef)),lon:toDecimal(val(tags?.GPSLongitude),val(tags?.GPSLongitudeRef))}}function toDecimal(v,ref){if(v==null)return null;if(typeof v==='number')return applyRef(v,ref);if(Array.isArray(v)){const n=v.map(x=>typeof x==='number'?x:(x?.numerator!=null&&x?.denominator?x.numerator/x.denominator:Number(x))).filter(Number.isFinite);if(n.length>=3)return applyRef(n[0]+n[1]/60+n[2]/3600,ref);if(n.length===1)return applyRef(n[0],ref)}const n=String(v).match(/-?\d+(?:\.\d+)?/g)?.map(Number)||[];if(n.length>=3)return applyRef(n[0]+n[1]/60+n[2]/3600,ref||String(v));if(n.length===1)return applyRef(n[0],ref||String(v));return null}function applyRef(n,ref){const s=Array.isArray(ref)?ref[0]:String(ref||'');return /S|W/i.test(s)?-Math.abs(n):n}function normalizeDate(v){if(!v)return null;if(v instanceof Date)return fmt(v);const s=String(v).trim();const m=s.match(/(\d{4})[:\-](\d{2})[:\-](\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);if(m)return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}:${m[6]}`;const d=new Date(s);return Number.isNaN(d.getTime())?null:fmt(d)}function fmt(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`}function dateKey(s){if(!s)return Infinity;const d=new Date(s.replace(' ','T'));return Number.isNaN(d.getTime())?Infinity:d.getTime()}
 </script>
 </body>
 </html>
