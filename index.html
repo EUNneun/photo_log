@@ -4,236 +4,142 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Photo Route Lab</title>
-  <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exifreader@4.44.1/dist/exif-reader.js"></script>
   <style>
-    :root{
-      --bg:#f6f7f9; --card:#fff; --text:#111827; --muted:#6b7280;
-      --line:#e5e7eb; --accent:#111827; --ok:#137333; --bad:#b3261e;
-    }
+    :root{--bg:#f6f7f9;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#111827;--ok:#137333;--bad:#b3261e}
     *{box-sizing:border-box}
-    body{
-      margin:0;background:var(--bg);color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
-    }
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif}
     .wrap{max-width:980px;margin:0 auto;padding:28px 18px 60px}
-    h1{font-size:28px;margin:0 0 8px}
-    .lead{margin:0 0 24px;color:var(--muted);line-height:1.6}
+    h1{font-size:28px;margin:0 0 8px}.lead{margin:0 0 24px;color:var(--muted);line-height:1.6}
     .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
-    .drop{
-      border:1.5px dashed #cbd5e1;border-radius:16px;padding:32px 18px;text-align:center;
-      cursor:pointer;background:#fafafa;transition:.15s
-    }
-    .drop.drag{background:#f1f5f9;border-color:#64748b}
-    .drop strong{display:block;font-size:17px;margin-bottom:6px}
-    .drop span{color:var(--muted);font-size:14px}
-    input[type=file]{display:none}
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
-    button{
-      border:0;border-radius:10px;padding:11px 14px;background:var(--accent);color:#fff;
-      font-weight:700;cursor:pointer
-    }
+    .drop{border:1.5px dashed #cbd5e1;border-radius:16px;padding:32px 18px;text-align:center;cursor:pointer;background:#fafafa;transition:.15s}
+    .drop.drag{background:#f1f5f9;border-color:#64748b}.drop strong{display:block;font-size:17px;margin-bottom:6px}.drop span{color:var(--muted);font-size:14px}
+    input[type=file]{display:none}.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+    button{border:0;border-radius:10px;padding:11px 14px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
     button.secondary{background:#eef2f7;color:#111827}
     .summary{margin:18px 0 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .stat{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}
-    .stat b{display:block;font-size:22px}.stat span{font-size:13px;color:var(--muted)}
+    .stat{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}.stat b{display:block;font-size:22px}.stat span{font-size:13px;color:var(--muted)}
+    .note{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.55}.debug{font-size:12px;color:var(--muted);margin-top:8px;white-space:pre-wrap}
     table{width:100%;border-collapse:collapse;margin-top:18px;background:#fff;border-radius:14px;overflow:hidden}
-    th,td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left;font-size:14px;vertical-align:top}
-    th{font-size:12px;color:var(--muted);background:#fafafa}
-    .thumb{width:54px;height:54px;object-fit:cover;border-radius:9px;border:1px solid var(--line)}
-    .ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
-    .empty{padding:30px;text-align:center;color:var(--muted)}
-    .note{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.55}
-    @media(max-width:700px){
-      .summary{grid-template-columns:1fr}
-      .table-wrap{overflow:auto}
-      table{min-width:760px}
-    }
+    th,td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left;font-size:14px;vertical-align:top}th{font-size:12px;color:var(--muted);background:#fafafa}
+    .thumb{width:54px;height:54px;object-fit:cover;border-radius:9px;border:1px solid var(--line)}.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}.empty{padding:30px;text-align:center;color:var(--muted)}
+    @media(max-width:700px){.summary{grid-template-columns:1fr}.table-wrap{overflow:auto}table{min-width:760px}}
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Photo Route Lab</h1>
-    <p class="lead">사진을 선택하면 브라우저에서 직접 촬영시간과 GPS 위치를 읽습니다. 사진은 서버로 업로드하지 않습니다.</p>
-
+    <p class="lead">사진을 선택하면 브라우저에서 촬영시간과 GPS 위치를 직접 읽습니다. 사진은 서버로 업로드하지 않습니다.</p>
     <div class="card">
-      <label class="drop" id="drop" for="files">
-        <strong>사진을 선택하거나 여기에 끌어놓으세요</strong>
-        <span>JPG / JPEG / HEIC 일부 지원 · 여러 장 선택 가능</span>
-      </label>
-      <input id="files" type="file" accept="image/*,.heic,.heif" multiple />
-
-      <div class="toolbar">
-        <button id="pickBtn">사진 선택</button>
-        <button id="clearBtn" class="secondary">초기화</button>
-        <button id="csvBtn" class="secondary">CSV 저장</button>
-      </div>
-
-      <div class="summary">
-        <div class="stat"><b id="total">0</b><span>선택한 사진</span></div>
-        <div class="stat"><b id="withTime">0</b><span>촬영시간 있음</span></div>
-        <div class="stat"><b id="withGps">0</b><span>GPS 있음</span></div>
-      </div>
-
-      <p class="note">※ 메신저/SNS/일부 업로드 과정에서 EXIF가 제거된 사진은 위치나 시간이 표시되지 않을 수 있습니다.</p>
+      <label class="drop" id="drop" for="files"><strong>사진을 선택하거나 여기에 끌어놓으세요</strong><span>JPG / JPEG / HEIC / HEIF · 여러 장 선택 가능</span></label>
+      <!-- 중요: 모바일 브라우저에서 accept="image/*"를 사용하면 GPS 메타데이터가 제거되는 사례가 있어 accept를 의도적으로 두지 않음 -->
+      <input id="files" type="file" multiple />
+      <div class="toolbar"><button id="pickBtn">사진 선택</button><button id="clearBtn" class="secondary">초기화</button><button id="csvBtn" class="secondary">CSV 저장</button></div>
+      <div class="summary"><div class="stat"><b id="total">0</b><span>선택한 사진</span></div><div class="stat"><b id="withTime">0</b><span>촬영시간 있음</span></div><div class="stat"><b id="withGps">0</b><span>GPS 있음</span></div></div>
+      <p class="note">※ 아이폰 사진 앱에서 원본 사진을 선택해 테스트해 주세요. 메신저/SNS를 거친 파일은 EXIF가 제거될 수 있습니다.</p>
+      <div id="debug" class="debug"></div>
     </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>미리보기</th>
-            <th>파일명</th>
-            <th>촬영시간</th>
-            <th>위도</th>
-            <th>경도</th>
-            <th>상태</th>
-          </tr>
-        </thead>
-        <tbody id="tbody">
-          <tr><td colspan="6" class="empty">아직 선택한 사진이 없습니다.</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="table-wrap"><table><thead><tr><th>미리보기</th><th>파일명</th><th>촬영시간</th><th>위도</th><th>경도</th><th>상태</th></tr></thead><tbody id="tbody"><tr><td colspan="6" class="empty">아직 선택한 사진이 없습니다.</td></tr></tbody></table></div>
   </div>
-
 <script>
-const filesInput = document.getElementById('files');
-const pickBtn = document.getElementById('pickBtn');
-const clearBtn = document.getElementById('clearBtn');
-const csvBtn = document.getElementById('csvBtn');
-const tbody = document.getElementById('tbody');
-const drop = document.getElementById('drop');
+const filesInput=document.getElementById('files');
+const tbody=document.getElementById('tbody');
+const drop=document.getElementById('drop');
+const debug=document.getElementById('debug');
+let rows=[];
 
-let rows = [];
-
-pickBtn.onclick = () => filesInput.click();
-clearBtn.onclick = () => {
-  rows = [];
-  filesInput.value = '';
-  render();
-};
-csvBtn.onclick = () => {
-  if (!rows.length) return alert('먼저 사진을 선택해 주세요.');
-  const header = ['fileName','dateTimeOriginal','latitude','longitude','hasTime','hasGps'];
-  const csv = [header.join(',')].concat(rows.map(r =>
-    [
-      q(r.fileName), q(r.dateTimeOriginal || ''),
-      r.latitude ?? '', r.longitude ?? '',
-      !!r.dateTimeOriginal, r.latitude != null && r.longitude != null
-    ].join(',')
-  )).join('\n');
-  const blob = new Blob(["\ufeff" + csv], {type:'text/csv;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'photo-metadata.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
+document.getElementById('pickBtn').onclick=()=>filesInput.click();
+document.getElementById('clearBtn').onclick=()=>{rows.forEach(r=>r.previewUrl&&URL.revokeObjectURL(r.previewUrl));rows=[];filesInput.value='';debug.textContent='';render()};
+document.getElementById('csvBtn').onclick=()=>{
+  if(!rows.length)return alert('먼저 사진을 선택해 주세요.');
+  const esc=v=>'"'+String(v??'').replaceAll('"','""')+'"';
+  const csv=['fileName,dateTimeOriginal,latitude,longitude,hasTime,hasGps',...rows.map(r=>[esc(r.fileName),esc(r.dateTimeOriginal),r.latitude??'',r.longitude??'',!!r.dateTimeOriginal,r.latitude!=null&&r.longitude!=null].join(','))].join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='photo-metadata.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);
 };
 
-function q(v){ return '"' + String(v).replaceAll('"','""') + '"'; }
-
-filesInput.addEventListener('change', e => handleFiles([...e.target.files]));
-
-['dragenter','dragover'].forEach(evt => drop.addEventListener(evt, e => {
-  e.preventDefault(); drop.classList.add('drag');
-}));
-['dragleave','drop'].forEach(evt => drop.addEventListener(evt, e => {
-  e.preventDefault(); drop.classList.remove('drag');
-}));
-drop.addEventListener('drop', e => handleFiles([...e.dataTransfer.files].filter(f => f.type.startsWith('image/'))));
+filesInput.addEventListener('change',e=>handleFiles([...e.target.files]));
+['dragenter','dragover'].forEach(evt=>drop.addEventListener(evt,e=>{e.preventDefault();drop.classList.add('drag')}));
+['dragleave','drop'].forEach(evt=>drop.addEventListener(evt,e=>{e.preventDefault();drop.classList.remove('drag')}));
+drop.addEventListener('drop',e=>handleFiles([...e.dataTransfer.files]));
 
 async function handleFiles(files){
-  if (!files.length) return;
-  rows = [];
-  tbody.innerHTML = `<tr><td colspan="6" class="empty">메타데이터를 읽는 중입니다...</td></tr>`;
-
-  for (const file of files){
-    let meta = {};
-    let lat = null, lon = null, dt = null;
-
-    try {
-      meta = await exifr.parse(file, {
-        tiff: true, exif: true, gps: true, ifd0: true,
-        pick: ['DateTimeOriginal','CreateDate','ModifyDate','GPSLatitude','GPSLongitude']
-      }) || {};
-
-      dt = meta.DateTimeOriginal || meta.CreateDate || meta.ModifyDate || null;
-
-      try {
-        const gps = await exifr.gps(file);
-        if (gps && Number.isFinite(gps.latitude) && Number.isFinite(gps.longitude)) {
-          lat = gps.latitude;
-          lon = gps.longitude;
-        }
-      } catch (_) {}
-
-      if (lat == null && Number.isFinite(meta.latitude)) lat = meta.latitude;
-      if (lon == null && Number.isFinite(meta.longitude)) lon = meta.longitude;
-      if (lat == null && Number.isFinite(meta.GPSLatitude)) lat = meta.GPSLatitude;
-      if (lon == null && Number.isFinite(meta.GPSLongitude)) lon = meta.GPSLongitude;
-    } catch (err) {
-      console.warn('EXIF parse failed:', file.name, err);
-    }
-
-    rows.push({
-      fileName: file.name,
-      dateTimeOriginal: formatDate(dt),
-      latitude: lat,
-      longitude: lon,
-      previewUrl: URL.createObjectURL(file)
-    });
+  if(!files.length)return;
+  rows.forEach(r=>r.previewUrl&&URL.revokeObjectURL(r.previewUrl));
+  rows=[];debug.textContent='';tbody.innerHTML='<tr><td colspan="6" class="empty">메타데이터를 읽는 중입니다...</td></tr>';
+  let failures=[];
+  for(const file of files){
+    let dt=null,lat=null,lon=null,error='';
+    try{
+      const tags=await ExifReader.load(file,{expanded:true,computed:true});
+      dt=pickDate(tags);
+      if(tags.gps){
+        if(Number.isFinite(tags.gps.Latitude))lat=tags.gps.Latitude;
+        if(Number.isFinite(tags.gps.Longitude))lon=tags.gps.Longitude;
+      }
+      if(lat==null||lon==null){
+        const flat=await ExifReader.load(file,{computed:true});
+        const coords=parseGpsFallback(flat);
+        if(lat==null)lat=coords.lat;
+        if(lon==null)lon=coords.lon;
+        if(!dt)dt=pickDate(flat);
+      }
+    }catch(err){error=err?.message||String(err);failures.push(`${file.name}: ${error}`)}
+    rows.push({fileName:file.name,dateTimeOriginal:normalizeDate(dt),latitude:lat,longitude:lon,previewUrl:URL.createObjectURL(file),error});
   }
-
-  rows.sort((a,b) => {
-    const ta = a.dateTimeOriginal ? new Date(a.dateTimeOriginal).getTime() : Infinity;
-    const tb = b.dateTimeOriginal ? new Date(b.dateTimeOriginal).getTime() : Infinity;
-    return ta - tb;
-  });
-
+  rows.sort((a,b)=>dateKey(a.dateTimeOriginal)-dateKey(b.dateTimeOriginal));
+  if(failures.length)debug.textContent='읽기 실패\n'+failures.join('\n');
   render();
 }
 
-function formatDate(v){
-  if (!v) return null;
-  const d = v instanceof Date ? v : new Date(v);
-  if (Number.isNaN(d.getTime())) return String(v);
-  const pad = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-
-function render(){
-  document.getElementById('total').textContent = rows.length;
-  document.getElementById('withTime').textContent = rows.filter(r => r.dateTimeOriginal).length;
-  document.getElementById('withGps').textContent = rows.filter(r => r.latitude != null && r.longitude != null).length;
-
-  if (!rows.length){
-    tbody.innerHTML = `<tr><td colspan="6" class="empty">아직 선택한 사진이 없습니다.</td></tr>`;
-    return;
+function pickDate(tags){
+  if(!tags)return null;
+  const candidates=[tags.exif?.DateTimeOriginal,tags.exif?.CreateDate,tags.exif?.DateTimeDigitized,tags['DateTimeOriginal'],tags['CreateDate'],tags['DateTimeDigitized'],tags['DateTime']];
+  for(const t of candidates){
+    if(!t)continue;
+    if(typeof t==='string')return t;
+    if(t.description)return t.description;
+    if(t.value)return Array.isArray(t.value)?t.value[0]:t.value;
+    if(t.computed)return t.computed;
   }
-
-  tbody.innerHTML = rows.map(r => {
-    const hasGps = r.latitude != null && r.longitude != null;
-    const hasTime = !!r.dateTimeOriginal;
-    const state = hasGps && hasTime ? '<span class="ok">경로 사용 가능</span>'
-                : hasTime ? '<span class="bad">GPS 없음</span>'
-                : hasGps ? '<span class="bad">시간 없음</span>'
-                : '<span class="bad">EXIF 없음</span>';
-
-    return `
-      <tr>
-        <td><img class="thumb" src="${r.previewUrl}" alt=""></td>
-        <td>${escapeHtml(r.fileName)}</td>
-        <td>${r.dateTimeOriginal || '-'}</td>
-        <td>${hasGps ? r.latitude.toFixed(6) : '-'}</td>
-        <td>${hasGps ? r.longitude.toFixed(6) : '-'}</td>
-        <td>${state}</td>
-      </tr>
-    `;
-  }).join('');
+  return null;
 }
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function parseGpsFallback(tags){
+  let lat=null,lon=null;
+  const val=t=>t?.computed??t?.value??t?.description??null;
+  lat=toDecimal(val(tags?.GPSLatitude),val(tags?.GPSLatitudeRef));
+  lon=toDecimal(val(tags?.GPSLongitude),val(tags?.GPSLongitudeRef));
+  return {lat,lon};
+}
+
+function toDecimal(v,ref){
+  if(v==null)return null;
+  if(typeof v==='number')return applyRef(v,ref);
+  if(Array.isArray(v)){
+    const nums=v.map(x=>typeof x==='number'?x:(x?.numerator!=null&&x?.denominator?x.numerator/x.denominator:Number(x))).filter(Number.isFinite);
+    if(nums.length>=3)return applyRef(nums[0]+nums[1]/60+nums[2]/3600,ref);
+    if(nums.length===1)return applyRef(nums[0],ref);
+  }
+  const nums=String(v).match(/-?\d+(?:\.\d+)?/g)?.map(Number)||[];
+  if(nums.length>=3)return applyRef(nums[0]+nums[1]/60+nums[2]/3600,ref||String(v));
+  if(nums.length===1)return applyRef(nums[0],ref||String(v));
+  return null;
+}
+function applyRef(n,ref){const s=Array.isArray(ref)?ref[0]:String(ref||'');return /S|W/i.test(s)?-Math.abs(n):n}
+function normalizeDate(v){
+  if(!v)return null;if(v instanceof Date)return formatDate(v);
+  const s=String(v).trim();
+  const m=s.match(/(\d{4})[:\-](\d{2})[:\-](\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+  if(m)return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}:${m[6]}`;
+  const d=new Date(s);return Number.isNaN(d.getTime())?s:formatDate(d);
+}
+function formatDate(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`}
+function dateKey(s){if(!s)return Infinity;const m=s.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6]).getTime():Infinity}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function render(){
+  document.getElementById('total').textContent=rows.length;document.getElementById('withTime').textContent=rows.filter(r=>r.dateTimeOriginal).length;document.getElementById('withGps').textContent=rows.filter(r=>r.latitude!=null&&r.longitude!=null).length;
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="6" class="empty">아직 선택한 사진이 없습니다.</td></tr>';return}
+  tbody.innerHTML=rows.map(r=>{const g=r.latitude!=null&&r.longitude!=null,t=!!r.dateTimeOriginal;const state=g&&t?'<span class="ok">경로 사용 가능</span>':t?'<span class="bad">GPS 없음</span>':g?'<span class="bad">시간 없음</span>':'<span class="bad">EXIF 없음</span>';return `<tr><td><img class="thumb" src="${r.previewUrl}" alt=""></td><td>${escapeHtml(r.fileName)}</td><td>${escapeHtml(r.dateTimeOriginal||'-')}</td><td>${g?r.latitude.toFixed(6):'-'}</td><td>${g?r.longitude.toFixed(6):'-'}</td><td>${state}</td></tr>`}).join('');
 }
 </script>
 </body>
