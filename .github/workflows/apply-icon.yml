@@ -1,0 +1,37 @@
+name: Apply PhotoLog icon
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-icon.yml'
+      - 'icon.svg'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-icon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply icon references
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          marker = '<title>PhotoLog</title>'
+          links = '''<title>PhotoLog</title>\n<link rel="icon" href="icon.svg" type="image/svg+xml" />\n<link rel="apple-touch-icon" href="icon.svg" />\n<link rel="manifest" href="manifest.webmanifest" />'''
+          if 'rel="manifest" href="manifest.webmanifest"' not in s:
+              s = s.replace(marker, links, 1)
+              p.write_text(s)
+          Path('manifest.webmanifest').write_text('''{\n  "name": "PhotoLog",\n  "short_name": "PhotoLog",\n  "start_url": "./",\n  "display": "standalone",\n  "background_color": "#ffffff",\n  "theme_color": "#1769ff",\n  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]\n}\n''')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html manifest.webmanifest
+          git diff --cached --quiet || git commit -m "Apply PhotoLog app icon"
+          git push
